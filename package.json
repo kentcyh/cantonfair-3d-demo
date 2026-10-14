@@ -1,0 +1,9 @@
+{
+  "name": "cantonfair-3d-demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node -e \"process.stdout.write('static site, no compile step\\n')\"",
+    "test": "node --test test/"
+  }
+}

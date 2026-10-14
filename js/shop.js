@@ -9,8 +9,12 @@ import {
   doorOpen,
   dryerSpinAngle,
   garmentSample,
+  machineGlow,
   phaseFromTime,
+  ringEmissive,
   washerSpinAngle,
+  waterDiscOpacity,
+  waterDropOpacity,
 } from "./playback.js";
 
 const MAX_PIXEL_RATIO = 1.65;
@@ -1039,10 +1043,10 @@ export function createShop(canvas) {
 
     const timedDoors = doorOpen(time);
     const phase = phaseFromTime(time);
-    washer.glow.intensity = 0.04 + phase.washIntensity * 0.7;
-    dryer.glow.intensity = 0.04 + phase.dryIntensity * 0.55;
-    washer.ringMaterial.emissiveIntensity = 0.16 + phase.washIntensity * 0.45;
-    dryer.ringMaterial.emissiveIntensity = 0.16 + phase.dryIntensity * 0.4;
+    washer.glow.intensity = machineGlow(phase.washIntensity);
+    dryer.glow.intensity = machineGlow(phase.dryIntensity);
+    washer.ringMaterial.emissiveIntensity = ringEmissive(phase.washIntensity);
+    dryer.ringMaterial.emissiveIntensity = ringEmissive(phase.dryIntensity);
     for (const button of washer.buttons) {
       button.material.emissiveIntensity = 0.22 + phase.washIntensity * 0.45;
     }
@@ -1050,8 +1054,8 @@ export function createShop(canvas) {
       button.material.emissiveIntensity = 0.22 + phase.dryIntensity * 0.4;
     }
 
-    effects.waterMaterial.opacity = phase.washIntensity * 0.42;
-    effects.waterDisc.material.opacity = phase.washIntensity * 0.28;
+    effects.waterMaterial.opacity = waterDropOpacity(phase.washIntensity);
+    effects.waterDisc.material.opacity = waterDiscOpacity(phase.washIntensity);
     for (const drop of effects.dropMeshes) {
       const angle = drop.userData.angle + washAngle * 2 + elapsed * phase.washIntensity;
       drop.position.set(Math.cos(angle) * drop.userData.radius, Math.sin(angle) * drop.userData.radius, 0);

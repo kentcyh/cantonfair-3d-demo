@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SUPPLIER_ORDER, SUPPLIERS } from "../js/catalog.js";
+import { readFileSync } from "node:fs";
 import { LAYOUT } from "../js/layout.js";
 import {
   DRY_END,
@@ -9,15 +10,23 @@ import {
   GARMENT_COUNT,
   LOAD_END,
   LOAD_FLIGHTS,
+  MACHINE_GLOW_MAX,
+  RING_EMISSIVE_BASE,
+  RING_EMISSIVE_BOOST,
   SHOW_END_SECONDS,
   TRANSFER_END,
   TRANSFER_FLIGHTS,
   WASH_END,
+  WATER_DISC_OPACITY_SCALE,
   armPose,
   chipStep,
   doorOpen,
   garmentSample,
+  machineGlow,
   phaseFromTime,
+  ringEmissive,
+  waterDiscOpacity,
+  waterDropOpacity,
 } from "../js/playback.js";
 
 const BEATS = [
@@ -166,4 +175,46 @@ test("the arm grips during a fold and rests before the show", () => {
   assert.ok(pressing.grip > 0.8);
   const after = armPose(SHOW_END_SECONDS);
   assert.ok(Math.abs(after.grip - rest.grip) < 0.05);
+});
+
+test("wash and dry lights stay under the whiteout caps", () => {
+  assert.ok(MACHINE_GLOW_MAX <= 0.45);
+  assert.equal(machineGlow(0), 0);
+  assert.equal(machineGlow(1), MACHINE_GLOW_MAX);
+  assert.equal(machineGlow(2), MACHINE_GLOW_MAX);
+  assert.equal(ringEmissive(0), RING_EMISSIVE_BASE);
+  assert.equal(ringEmissive(1), RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+  assert.ok(RING_EMISSIVE_BOOST < 0.35);
+  assert.ok(ringEmissive(1) < 1);
+  assert.equal(waterDiscOpacity(0), 0);
+  assert.equal(waterDiscOpacity(1), WATER_DISC_OPACITY_SCALE);
+  assert.ok(WATER_DISC_OPACITY_SCALE < 0.25);
+  assert.ok(waterDropOpacity(1) < 0.6);
+
+  for (let time = 0; time <= SHOW_END_SECONDS; time += 0.05) {
+    const phase = phaseFromTime(time);
+    assert.ok(machineGlow(phase.wash) <= MACHINE_GLOW_MAX);
+    assert.ok(machineGlow(phase.dry) <= MACHINE_GLOW_MAX);
+    assert.ok(ringEmissive(phase.wash) <= RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+    assert.ok(ringEmissive(phase.dry) <= RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+  }
+});
+
+test("shop applies the capped wash and dry highlights", () => {
+  const source = readFileSync(new URL("../js/shop.js", import.meta.url), "utf8");
+  assert.match(source, /washer\.glow\.intensity = machineGlow\(phase\.washIntensity\)/);
+  assert.match(source, /dryer\.glow\.intensity = machineGlow\(phase\.dryIntensity\)/);
+  assert.match(source, /washer\.ringMaterial\.emissiveIntensity = ringEmissive\(phase\.washIntensity\)/);
+  assert.match(source, /dryer\.ringMaterial\.emissiveIntensity = ringEmissive\(phase\.dryIntensity\)/);
+  assert.match(source, /waterDiscOpacity\(phase\.washIntensity\)/);
+  assert.match(source, /waterDropOpacity\(phase\.washIntensity\)/);
+  assert.equal(source.includes("washIntensity * 0.7"), false);
+  assert.equal(source.includes("dryIntensity * 0.55"), false);
+  assert.equal(source.includes("wash * 2.2"), false);
+  assert.equal(source.includes("dry * 2.2"), false);
+  assert.equal(source.includes("AdditiveBlending"), false);
+  const waterDisc = source.slice(source.indexOf("waterDisc = new THREE.Mesh"), source.indexOf("waterDisc.position"));
+  assert.equal(waterDisc.includes("AdditiveBlending"), false);
+  const waterDrops = source.slice(source.indexOf("const waterMaterial"), source.indexOf("const airMaterial"));
+  assert.equal(waterDrops.includes("AdditiveBlending"), false);
 });

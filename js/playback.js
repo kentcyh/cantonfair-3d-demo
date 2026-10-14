@@ -41,3 +41,36 @@ export function chipStep(playing, time) {
   if (!playing) return 0;
   return phaseFromTime(time).step;
 }
+
+/** Door point light. wash/dry * 2.2 sat behind the glass and clipped to white. */
+export const MACHINE_GLOW_MAX = 0.45;
+/** Resting door-ring emissive. The play boost is added on top. */
+export const RING_EMISSIVE_BASE = 0.55;
+/** Was 1.3, which peaked near 1.85 and blew the ring out. */
+export const RING_EMISSIVE_BOOST = 0.22;
+/** Was 0.5 on an additive disc covering the door. */
+export const WATER_DISC_OPACITY_SCALE = 0.16;
+const WATER_DROP_OPACITY_BASE = 0.28;
+const WATER_DROP_OPACITY_GAIN = 0.22;
+
+function clamp01(amount) {
+  if (amount <= 0) return 0;
+  if (amount >= 1) return 1;
+  return amount;
+}
+
+export function machineGlow(amount) {
+  return Math.min(MACHINE_GLOW_MAX, clamp01(amount) * MACHINE_GLOW_MAX);
+}
+
+export function ringEmissive(amount) {
+  return RING_EMISSIVE_BASE + clamp01(amount) * RING_EMISSIVE_BOOST;
+}
+
+export function waterDiscOpacity(amount) {
+  return clamp01(amount) * WATER_DISC_OPACITY_SCALE;
+}
+
+export function waterDropOpacity(amount) {
+  return WATER_DROP_OPACITY_BASE + clamp01(amount) * WATER_DROP_OPACITY_GAIN;
+}

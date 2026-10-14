@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "../vendor/OrbitControls.js";
 import { RoundedBoxGeometry } from "../vendor/RoundedBoxGeometry.js";
 import { SUPPLIERS } from "./catalog.js";
+import { machineGlow, ringEmissive, waterDiscOpacity, waterDropOpacity } from "./playback.js";
 
 // Procedural stand-ins. TODO: replace with real glTF machines when models arrive.
 
@@ -17,6 +18,8 @@ const WASHER_ACCENT = 0x3ecbff;
 const DRYER_ACCENT = 0xb388ff;
 const ARM_ACCENT = 0x3ee0a2;
 const WATER_DROP_COUNT = 28;
+const WATER_DROP_PIXEL_SIZE = 6;
+const WATER_DROP_COLOR = 0x3ec8ff;
 const AIR_STREAK_COUNT = 12;
 const EXPLODE_READY = 0.65;
 const SELECT_SCALE = 1.08;
@@ -251,13 +254,12 @@ export function createShop(canvas) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     const material = new THREE.PointsMaterial({
-      color: 0xb8f3ff,
-      size: 10,
+      color: WATER_DROP_COLOR,
+      size: WATER_DROP_PIXEL_SIZE,
       transparent: true,
       opacity: 0,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
-      sizeAttenuation: true,
+      sizeAttenuation: false,
     });
     const points = new THREE.Points(geometry, material);
     points.raycast = () => {};
@@ -478,7 +480,6 @@ export function createShop(canvas) {
           transparent: true,
           opacity: 0,
           depthWrite: false,
-          blending: THREE.AdditiveBlending,
         }),
       );
       waterDisc.position.set(0, doorCenterY, doorZ + 0.04);
@@ -761,7 +762,7 @@ export function createShop(canvas) {
     const drops = washer.water;
     const visible = intensity > 0.04;
     drops.points.visible = visible;
-    washer.waterDisc.material.opacity = intensity * 0.5;
+    washer.waterDisc.material.opacity = waterDiscOpacity(intensity);
     if (!visible) return;
     const positions = drops.positions;
     for (let index = 0; index < WATER_DROP_COUNT; index += 1) {
@@ -772,7 +773,7 @@ export function createShop(canvas) {
       positions[index * 3 + 2] = Math.sin(angle * 2) * 0.015;
     }
     drops.geometry.attributes.position.needsUpdate = true;
-    drops.material.opacity = 0.4 + intensity * 0.6;
+    drops.material.opacity = waterDropOpacity(intensity);
   }
 
   function updateAir(intensity) {
@@ -902,10 +903,10 @@ export function createShop(canvas) {
       const dry = state.dry;
       washer.drum.rotation.y += deltaSeconds * wash * 7.5;
       dryer.drum.rotation.y += deltaSeconds * dry * 8;
-      washer.glow.intensity = wash * 2.2;
-      dryer.glow.intensity = dry * 2.2;
-      washer.ringMaterial.emissiveIntensity = 0.55 + wash * 1.3;
-      dryer.ringMaterial.emissiveIntensity = 0.55 + dry * 1.3;
+      washer.glow.intensity = machineGlow(wash);
+      dryer.glow.intensity = machineGlow(dry);
+      washer.ringMaterial.emissiveIntensity = ringEmissive(wash);
+      dryer.ringMaterial.emissiveIntensity = ringEmissive(dry);
       for (const button of washer.buttons) {
         button.material.emissiveIntensity = 0.2 + wash * (0.6 + 0.4 * Math.sin(elapsed * 8));
       }

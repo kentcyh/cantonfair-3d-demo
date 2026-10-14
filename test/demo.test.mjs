@@ -1,12 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SUPPLIER_ORDER, SUPPLIERS } from "../js/catalog.js";
+import { readFileSync } from "node:fs";
 import {
   DRY_END_SECONDS,
   FOLD_END_SECONDS,
+  MACHINE_GLOW_MAX,
+  RING_EMISSIVE_BASE,
+  RING_EMISSIVE_BOOST,
   WASH_END_SECONDS,
+  WATER_DISC_OPACITY_SCALE,
   chipStep,
+  machineGlow,
   phaseFromTime,
+  ringEmissive,
+  waterDiscOpacity,
+  waterDropOpacity,
 } from "../js/playback.js";
 
 test("catalog matches Jenny's five draft categories", () => {
@@ -73,4 +82,48 @@ test("effects do not overlap and chips light only while playing", () => {
   assert.equal(chipStep(true, 8), 3);
   assert.equal(chipStep(false, FOLD_END_SECONDS), 0);
   assert.equal(chipStep(false, 1.5), 0);
+});
+
+test("wash and dry lights stay under the whiteout caps", () => {
+  assert.ok(MACHINE_GLOW_MAX <= 0.45);
+  assert.equal(machineGlow(0), 0);
+  assert.equal(machineGlow(1), MACHINE_GLOW_MAX);
+  assert.equal(machineGlow(2), MACHINE_GLOW_MAX);
+  assert.equal(ringEmissive(0), RING_EMISSIVE_BASE);
+  assert.equal(ringEmissive(1), RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+  assert.ok(RING_EMISSIVE_BOOST < 0.35);
+  assert.ok(ringEmissive(1) < 1);
+  assert.equal(waterDiscOpacity(0), 0);
+  assert.equal(waterDiscOpacity(1), WATER_DISC_OPACITY_SCALE);
+  assert.ok(WATER_DISC_OPACITY_SCALE < 0.25);
+  assert.ok(waterDropOpacity(1) < 0.6);
+
+  for (let time = 0; time <= FOLD_END_SECONDS; time += 0.05) {
+    const phase = phaseFromTime(time);
+    assert.ok(machineGlow(phase.wash) <= MACHINE_GLOW_MAX);
+    assert.ok(machineGlow(phase.dry) <= MACHINE_GLOW_MAX);
+    assert.ok(ringEmissive(phase.wash) <= RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+    assert.ok(ringEmissive(phase.dry) <= RING_EMISSIVE_BASE + RING_EMISSIVE_BOOST);
+  }
+});
+
+test("shop applies the capped wash and dry highlights", () => {
+  const source = readFileSync(new URL("../js/shop.js", import.meta.url), "utf8");
+  assert.match(source, /machineGlow\(wash\)/);
+  assert.match(source, /machineGlow\(dry\)/);
+  assert.match(source, /ringEmissive\(wash\)/);
+  assert.match(source, /ringEmissive\(dry\)/);
+  assert.match(source, /waterDiscOpacity\(intensity\)/);
+  assert.match(source, /waterDropOpacity\(intensity\)/);
+  assert.match(source, /sizeAttenuation:\s*false/);
+  assert.equal(source.includes("wash * 2.2"), false);
+  assert.equal(source.includes("dry * 2.2"), false);
+  assert.equal(source.includes("wash * 1.3"), false);
+  assert.equal(source.includes("dry * 1.3"), false);
+  assert.equal(/size:\s*10\b/.test(source), false);
+  const waterDisc = source.slice(source.indexOf("waterDisc = new THREE.Mesh"), source.indexOf("waterDisc.position"));
+  assert.equal(waterDisc.includes("AdditiveBlending"), false);
+  const waterDrops = source.slice(source.indexOf("function createWaterDrops"), source.indexOf("function createFrontLoader"));
+  assert.equal(waterDrops.includes("AdditiveBlending"), false);
+  assert.equal(waterDrops.includes("0xb8f3ff"), false);
 });

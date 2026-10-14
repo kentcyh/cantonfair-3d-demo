@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="廣交會洗衣舖 3D 演示：洗衣機、乾衣機、機械臂摺衫。" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>洗衣舖 3D 演示 · 廣交會</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%233ec8ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <h1>洗衣舖 3D 演示</h1>
+      <p>Canton Fair · 手機直向</p>
+    </header>
+
+    <section class="viewport" aria-label="三維洗衣舖">
+      <canvas id="scene" aria-label="左洗衣機、中乾衣機、右機械臂"></canvas>
+      <div class="scene-badge">3D SCENE</div>
+      <div id="label-washer" class="float-label">洗衣機</div>
+      <div id="label-dryer" class="float-label">乾衣機</div>
+      <div id="label-arm" class="float-label">機械臂</div>
+      <div id="label-folded" class="float-label tag">摺好衫</div>
+      <p id="scene-fallback" class="fallback" hidden>此瀏覽器未能開啟 3D 場景。</p>
+      <article id="supplier-card" class="supplier-card" hidden>
+        <button type="button" id="card-close" class="card-close" aria-label="關閉">×</button>
+        <h3><span id="card-dot" class="dot"></span><span id="card-zh"></span></h3>
+        <p id="card-role"></p>
+        <p id="card-en" class="card-en"></p>
+      </article>
+    </section>
+
+    <div class="chips" role="list">
+      <div class="chip" id="chip-wash" role="listitem">
+        <span class="chip-title">① 洗衣</span>
+        <span class="chip-sub">水流</span>
+      </div>
+      <div class="chip" id="chip-dry" role="listitem">
+        <span class="chip-title">② 乾衣</span>
+        <span class="chip-sub">抽風</span>
+      </div>
+      <div class="chip" id="chip-fold" role="listitem">
+        <span class="chip-title">③ 摺衫</span>
+        <span class="chip-sub">機械臂</span>
+      </div>
+    </div>
+
+    <button type="button" id="play" class="play" aria-pressed="false">▶ 播放流程</button>
+    <button type="button" id="explode" class="explode" aria-pressed="false">◇ 爆炸視圖 · 睇零件</button>
+
+    <section class="supplier" aria-labelledby="supplier-title">
+      <h2 id="supplier-title">零件 → Supplier（點零件彈出）</h2>
+      <p id="supplier-hint" class="hint">開爆炸視圖後，點零件彈出類別</p>
+      <ul id="legend" class="legend"></ul>
+    </section>
+
+    <p id="step-live" class="sr-only" aria-live="polite"></p>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three.module.min.js"
+      }
+    }
+  </script>
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>

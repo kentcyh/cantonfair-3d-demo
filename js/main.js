@@ -1,5 +1,5 @@
 import { SUPPLIER_ORDER, SUPPLIERS } from "./catalog.js";
-import { FOLD_END_SECONDS, chipStep, phaseFromTime } from "./playback.js";
+import { SHOW_END_SECONDS, chipStep } from "./playback.js";
 import { EXPLODE_READY, createShop } from "./shop.js";
 
 const MAX_DELTA_SECONDS = 0.05;
@@ -7,7 +7,15 @@ const TAP_SLOP_PX = 8;
 const HINT_IDLE = "開爆炸視圖後，點零件彈出類別";
 const HINT_EXPLODED = "點散開的零件";
 const HINT_NEED_EXPLODE = "請先開啟爆炸視圖，再點零件";
-const LIVE_LABELS = ["", "正在洗衣", "正在乾衣", "正在摺衫"];
+const LIVE_LABELS = [
+  "",
+  "正在放入洗衣機",
+  "正在滾筒洗衣",
+  "正在送去乾衣機",
+  "正在烘乾",
+  "正在摺衫",
+  "正在疊好",
+];
 
 function required(selector) {
   const element = document.querySelector(selector);
@@ -32,7 +40,14 @@ const cardEn = required("#card-en");
 const hint = required("#supplier-hint");
 const legend = required("#legend");
 const stepLive = required("#step-live");
-const chips = [required("#chip-wash"), required("#chip-dry"), required("#chip-fold")];
+const chips = [
+  required("#chip-load"),
+  required("#chip-wash"),
+  required("#chip-transfer"),
+  required("#chip-dry"),
+  required("#chip-fold"),
+  required("#chip-stack"),
+];
 const labelElements = {
   washer: required("#label-washer"),
   dryer: required("#label-dryer"),
@@ -158,18 +173,15 @@ if (!shop) {
   function renderFrame(deltaSeconds) {
     if (playing) {
       playTime += deltaSeconds;
-      if (playTime >= FOLD_END_SECONDS) {
+      if (playTime >= SHOW_END_SECONDS) {
         playing = false;
-        playTime = FOLD_END_SECONDS;
+        playTime = SHOW_END_SECONDS;
         setPlayButton();
       }
     }
-    const phase = phaseFromTime(playTime);
     setChip(chipStep(playing, playTime));
     shop.render({
-      wash: phase.wash,
-      dry: phase.dry,
-      fold: phase.fold,
+      time: playTime,
       explodeTarget,
       selectedId,
       reduceMotion,
@@ -179,6 +191,10 @@ if (!shop) {
 
   function onTap(clientX, clientY) {
     const hit = shop.pick(clientX, clientY);
+    if (hit.kind === "operable") {
+      shop.activate(hit.id);
+      return;
+    }
     if (hit.kind === "part") {
       if (shop.getExplodeAmount() < EXPLODE_READY) {
         flashNeedExplode();

@@ -55,7 +55,7 @@ button, input { font: inherit; }
 
 .viewport {
   position: relative;
-  height: clamp(280px, 46dvh, 520px);
+  height: clamp(268px, 44dvh, 520px);
   border-radius: 18px;
   overflow: hidden;
   background: var(--bg);
@@ -181,24 +181,24 @@ button, input { font: inherit; }
 .chips {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
+  gap: 6px;
 }
 
 .chip {
-  min-height: 48px;
+  min-height: 42px;
   border-radius: 12px;
   background: var(--chip);
   border: 1px solid var(--panel-border);
-  padding: 6px 8px;
+  padding: 5px 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
 }
 
-.chip-title { font-size: 14px; font-weight: 750; }
+.chip-title { font-size: 13px; font-weight: 750; }
 
-.chip-sub { font-size: 12px; color: var(--muted); }
+.chip-sub { font-size: 11px; color: var(--muted); }
 
 .chip.is-active {
   border-color: var(--cyan);

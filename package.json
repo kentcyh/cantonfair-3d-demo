@@ -4,6 +4,6 @@
   "type": "module",
   "scripts": {
     "build": "node -e \"process.stdout.write('static site, no compile step\\n')\"",
-    "test": "node --test test/"
+    "test": "node --test ./test/*.mjs"
   }
 }
